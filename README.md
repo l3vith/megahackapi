@@ -13,7 +13,6 @@ This example starts up a [FastAPI](https://fastapi.tiangolo.com/) server.
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/-NvLj4?referralCode=CRJ8FE)
 ## ✨ Features
-
 - FastAPI
 - [Hypercorn](https://hypercorn.readthedocs.io/)
 - Python 3
