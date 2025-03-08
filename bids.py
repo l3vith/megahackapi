@@ -118,33 +118,34 @@ class UpdateBidRequest(BaseModel):
     highest_bid_user: Optional[str] = None
 
 @app.patch("/api/bids/{vendor_id}")
-async def update_bid(vendor_id: str, bid: UpdateBidRequest):
+async def update_bid(vendor_id: int, bid: UpdateBidRequest):
     try:
-        # Check if the vendor exists
-        existing_entry = collection.find_one({"vendor_id": vendor_id})
+        print(f"Searching for vendor_id: {vendor_id}")  # Debugging
+
+        # Force vendor_id to string
+        existing_entry = collection.find_one({"vendor_id": str(vendor_id)})
 
         if not existing_entry:
-            raise HTTPException(status_code=404, detail="Bid not found")
+            raise HTTPException(status_code=404, detail=f"Bid not found for vendor_id {vendor_id}")
 
-        # Convert request data to a dictionary and remove None values
         update_data = {k: v for k, v in bid.dict().items() if v is not None}
-
+        
         # Ensure datetime fields are stored as ISO format
         if "start_time" in update_data:
             update_data["start_time"] = update_data["start_time"].isoformat()
         if "end_time" in update_data:
             update_data["end_time"] = update_data["end_time"].isoformat()
 
-        # Update the bid in the database
-        collection.update_one({"vendor_id": vendor_id}, {"$set": update_data})
+        collection.update_one({"vendor_id": str(vendor_id)}, {"$set": update_data})
 
         return {"message": "Bid updated successfully", "updated_fields": update_data}
 
     except Exception as e:
         return {"error": "Failed to update bid", "details": str(e)}
+
     
 @app.delete("/api/bids/{vendor_id}")
-async def delete_bid(vendor_id: str):
+async def delete_bid(vendor_id: int):
     try:
         # Check if the bid exists
         existing_entry = collection.find_one({"vendor_id": vendor_id})
