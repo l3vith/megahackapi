@@ -13,6 +13,14 @@ from fastapi import HTTPException
 app = FastAPI()
 load_dotenv()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can specify your allowed origins here
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 from astrapy import DataAPIClient
 
@@ -122,26 +130,30 @@ async def update_bid(vendor_id: int, bid: UpdateBidRequest):
     try:
         print(f"Searching for vendor_id: {vendor_id}")  # Debugging
 
-        # Force vendor_id to string
-        existing_entry = collection.find_one({"vendor_id": str(vendor_id)})
-
+        # Check if the vendor exists (force vendor_id to int)
+        existing_entry = collection.find_one({"vendor_id": vendor_id})
         if not existing_entry:
             raise HTTPException(status_code=404, detail=f"Bid not found for vendor_id {vendor_id}")
 
         update_data = {k: v for k, v in bid.dict().items() if v is not None}
-        
+
         # Ensure datetime fields are stored as ISO format
         if "start_time" in update_data:
             update_data["start_time"] = update_data["start_time"].isoformat()
         if "end_time" in update_data:
             update_data["end_time"] = update_data["end_time"].isoformat()
 
-        collection.update_one({"vendor_id": str(vendor_id)}, {"$set": update_data})
+        # Debugging: Print update payload
+        print(f"Updating {vendor_id} with data: {update_data}")
+
+        # Perform update
+        result = collection.update_one({"vendor_id": vendor_id}, {"$set": update_data})
 
         return {"message": "Bid updated successfully", "updated_fields": update_data}
 
     except Exception as e:
         return {"error": "Failed to update bid", "details": str(e)}
+
 
     
 @app.delete("/api/bids/{vendor_id}")
