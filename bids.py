@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 
 
-
 app = FastAPI()
 load_dotenv()
 
@@ -131,8 +130,11 @@ async def update_bid(vendor_id: int, bid: UpdateBidRequest):
     try:
         print(f"Searching for vendor_id: {vendor_id}")  # Debugging
 
-        # Check if the vendor exists (force vendor_id to int)
-        existing_entry = collection.find_one({"vendor_id": vendor_id})
+        # Try finding the vendor ID as an integer or a string
+        existing_entry = collection.find_one({
+            "$or": [{"vendor_id": vendor_id}, {"vendor_id": str(vendor_id)}]
+        })
+
         if not existing_entry:
             raise HTTPException(status_code=404, detail=f"Bid not found for vendor_id {vendor_id}")
 
@@ -148,7 +150,10 @@ async def update_bid(vendor_id: int, bid: UpdateBidRequest):
         print(f"Updating {vendor_id} with data: {update_data}")
 
         # Perform update
-        result = collection.update_one({"vendor_id": vendor_id}, {"$set": update_data})
+        result = collection.update_one(
+            {"$or": [{"vendor_id": vendor_id}, {"vendor_id": str(vendor_id)}]},
+            {"$set": update_data}
+        )
 
         return {"message": "Bid updated successfully", "updated_fields": update_data}
 
@@ -156,7 +161,7 @@ async def update_bid(vendor_id: int, bid: UpdateBidRequest):
         return {"error": "Failed to update bid", "details": str(e)}
 
 
-    
+
 @app.delete("/api/bids/{vendor_id}")
 async def delete_bid(vendor_id: int):
     try:
