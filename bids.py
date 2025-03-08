@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 
 
+
 app = FastAPI()
 load_dotenv()
 
